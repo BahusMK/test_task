@@ -1,0 +1,73 @@
+version: "3"
+services:
+  postgres:
+    container_name: postgres_container
+    image: postgres:13.3
+    environment:
+      POSTGRES_DB: ${ENV_PG_DBNAME}
+      POSTGRES_USER: ${ENV_PG_USER}
+      POSTGRES_PASSWORD: ${ENV_PG_PASS}
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - ./InitDatabase:/docker-entrypoint-initdb.d
+      - ./DB_FILES:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ENV_PG_USER} -d ${ENV_PG_DBNAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 4G
+    networks:
+      - postgres
+
+  go_app:
+    container_name: go_app
+    build: ./go_app
+    restart: always
+    depends_on:
+      - postgres_container
+    environment:
+      PG_HOST: postgres_container
+      PG_PORT: 5432
+      PG_USER: ${ENV_PG_USER}
+      PG_PASS: ${ENV_PG_PASS}
+      PG_DBNAME: ${ENV_PG_DBNAME}
+    ports:
+      - "8080:8080"
+    networks:
+      - postgres
+
+  pgadmin:
+    container_name: pgadmin_container
+    image: dpage/pgadmin4:5.7
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${ENV_PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${ENV_PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    depends_on:
+      - postgres_container
+    volumes:
+      - ./pgadmin:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+    networks:
+      - postgres
+
+networks:
+  postgres:
+    driver: bridge
+

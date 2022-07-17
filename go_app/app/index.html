@@ -1,0 +1,35 @@
+{{define "index"}}
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table, th, td {
+  border: 1px solid black;
+}
+</style>
+</head>
+<body>
+
+<h2>Values From DB</h2>
+
+<table style="width:100%">
+  <tr>
+    <th>UUID</th>
+    <th>Time Stamp</th> 
+    <th>Name</th>
+    <th>HASH</th>
+  </tr>
+
+  {{range $item := .items}}
+   <tr>
+    <td>{{$item.uuid}}</td>
+    <td>{{$item.ts}}</td>
+    <td>{{$item.name}}</td>
+    <td>{{$item.hash}}</td>
+  </tr>
+  {{end}}
+
+</body>
+</html>
+
+{{end}}
